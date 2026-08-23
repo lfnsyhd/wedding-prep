@@ -1,6 +1,3 @@
-Ah, saya paham sekarang! Masalahnya ada pada efek perbesaran (scale-110) dan padding kontainer horizontal yang membuat perhitungan posisi tengah (offsetLeft) sedikit meleset dari titik tengah pandangan kontainer (sehingga posisinya sedikit "nongkrong" ke kiri seperti di gambar pertama).
-Untuk memperbaikinya secara pasti agar tanggal yang aktif benar-benar berada tepat di tengah screen (seperti hasil scroll manual Anda di gambar kedua), kita bisa menambahkan sedikit penyesuaian (offset) ke kiri pada perhitungan scroll-nya.
-Berikut adalah perbaikan kodenya. Silakan salin dan perbarui file index.html Anda di GitHub:
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -304,4 +301,3 @@ Berikut adalah perbaikan kodenya. Silakan salin dan perbarui file index.html And
     </script>
 </body>
 </html>
-
