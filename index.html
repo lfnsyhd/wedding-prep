@@ -1,3 +1,6 @@
+Ah, saya paham sekarang! Masalahnya ada pada efek perbesaran (scale-110) dan padding kontainer horizontal yang membuat perhitungan posisi tengah (offsetLeft) sedikit meleset dari titik tengah pandangan kontainer (sehingga posisinya sedikit "nongkrong" ke kiri seperti di gambar pertama).
+Untuk memperbaikinya secara pasti agar tanggal yang aktif benar-benar berada tepat di tengah screen (seperti hasil scroll manual Anda di gambar kedua), kita bisa menambahkan sedikit penyesuaian (offset) ke kiri pada perhitungan scroll-nya.
+Berikut adalah perbaikan kodenya. Silakan salin dan perbarui file index.html Anda di GitHub:
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -49,7 +52,7 @@
                 <button onclick="changeDateToToday()" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded-xl text-slate-300 transition">Hari Ini</button>
             </div>
 
-            <!-- PANEL: KALENDER 1 BULAN PENUH (DI PINDAH KE ATAS) -->
+            <!-- PANEL: KALENDER 1 BULAN PENUH -->
             <div class="mb-5 bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
                 <div class="flex justify-between items-center mb-3">
                     <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider" id="month-title">Bulan Ini</span>
@@ -122,7 +125,6 @@
             return date.toLocaleDateString('id-ID', options);
         }
 
-        // Fungsi helper untuk mendapatkan string tanggal lokal YYYY-MM-DD yang akurat tanpa geser zona waktu
         function getLocalDateKey(date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -183,7 +185,6 @@
                 dayBadge.className = "bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs px-3 py-1 rounded-full font-medium";
             }
 
-            // Render checklist
             checklistContainer.innerHTML = '';
             let completedCount = 0;
             let totalBurnedCal = 0;
@@ -214,12 +215,10 @@
                 checklistContainer.appendChild(div);
             });
 
-            // Update Progress Bar
             const percent = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
             progressBar.style.width = `${percent}%`;
             progressText.textContent = `${percent}% Selesai (${completedCount}/${totalTasks})`;
 
-            // Update Kalori Panel
             burnedCaloriesLabel.innerHTML = `${totalBurnedCal} <span class="text-xs font-normal text-orange-400">Kcal</span>`;
             if (totalBurnedCal > 300) {
                 calorieStatus.textContent = "Bakar Kalori Mantap! 🔥";
@@ -229,7 +228,6 @@
                 calorieStatus.textContent = "Belum ada aktivitas";
             }
 
-            // Render Kalender 1 Bulan Penuh & Auto-center
             renderMonthCalendar();
         }
 
@@ -264,7 +262,6 @@
                 const dayName = d.toLocaleDateString('id-ID', { weekday: 'short' });
 
                 const card = document.createElement('div');
-                // Box fokus dibuat lebih besar (scale-110) dan menggunakan z-index agar tampil menonjol
                 card.className = `min-w-[62px] p-2 rounded-xl border flex flex-col items-center justify-between transition-all duration-300 cursor-pointer ${isSelectedDay ? 'bg-orange-500/20 border-orange-500 text-orange-300 ring-2 ring-orange-500 scale-110 z-10 shadow-lg shadow-orange-500/20' : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:bg-slate-800'}`;
                 
                 card.innerHTML = `
@@ -289,11 +286,12 @@
                 monthChartContainer.appendChild(card);
             }
 
-            // Auto-scroll persis ke tengah layar dengan perhitungan akurat
+            // Auto-scroll dengan kalibrasi ekstra agar kotak terfokus benar-benar pas di tengah layar
             if (targetCard) {
                 setTimeout(() => {
                     const container = monthChartContainer;
-                    const scrollLeftTarget = targetCard.offsetLeft - (container.clientWidth / 2) + (targetCard.clientWidth / 2);
+                    // Disesuaikan dengan menggeser sedikit lebih banyak ke kiri agar pas di tengah screen
+                    const scrollLeftTarget = targetCard.offsetLeft - (container.clientWidth / 2) + (targetCard.clientWidth / 2) + 10;
                     container.scrollTo({
                         left: scrollLeftTarget,
                         behavior: 'smooth'
@@ -306,3 +304,4 @@
     </script>
 </body>
 </html>
+
