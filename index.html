@@ -1,1 +1,177 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wedding Prep Tracker</title>
+    <!-- Tailwind CSS untuk styling cepat & modern -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400,500,600,700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center p-4">
 
+    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-orange-500">Fit to Size L 💍</h1>
+                <p class="text-xs text-slate-400" id="current-date">Memuat tanggal...</p>
+            </div>
+            <div class="bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs px-3 py-1 rounded-full font-medium" id="day-badge">
+                Mode
+            </div>
+        </div>
+
+        <!-- Tanggal Picker & Reset -->
+        <div class="mb-5 flex gap-2">
+            <input type="date" id="date-picker" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-orange-500">
+            <button onclick="changeDateToToday()" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded-xl text-slate-300 transition">Hari Ini</button>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="mb-6 bg-slate-800 rounded-full h-2.5 overflow-hidden border border-slate-700/50">
+            <div id="progress-bar" class="bg-gradient-to-r from-orange-500 to-amber-400 h-2.5 transition-all duration-300" style="width: 0%"></div>
+        </div>
+        <div class="flex justify-between text-xs text-slate-400 mb-6">
+            <span>Progres Harian</span>
+            <span id="progress-text">0% Selesai</span>
+        </div>
+
+        <!-- Ceklis List -->
+        <div class="space-y-3 mb-6" id="checklist-container">
+            <!-- Item akan di-generate via JavaScript -->
+        </div>
+
+        <!-- Bagian Workout Weekend (Dinamis) -->
+        <div id="weekend-section" class="hidden bg-slate-800/50 border border-orange-500/30 rounded-xl p-4 mb-6">
+            <h2 class="text-xs font-semibold text-orange-400 uppercase tracking-wider mb-2">💪 Target Workout Weekend (Dumbbell 5kg)</h2>
+            <textarea id="workout-notes" placeholder="Contoh: Goblet Squat 3x12, Floor Press 3x10, Bicep Curl 3x10..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-orange-500 h-24 resize-none"></textarea>
+            <button onclick="saveWorkoutNotes()" class="mt-2 w-full bg-orange-600 hover:bg-orange-500 text-slate-950 font-semibold py-2 rounded-xl text-xs transition">Simpan Catatan Workout</button>
+        </div>
+
+        <!-- Footer Info -->
+        <p class="text-center text-[10px] text-slate-500">Data tersimpan otomatis di perangkat Anda (LocalStorage)</p>
+    </div>
+
+    <script>
+        // Daftar tugas harian
+        const tasksConfig = [
+            { id: 'gojek', label: 'Naik Gojek ke Kantor (Pagi)' },
+            { id: 'nosarapan', label: 'Tidak Sarapan (Intermittent)' },
+            { id: 'makan_siang', label: 'Makan Siang Terkontrol' },
+            { id: 'makan_malam', label: 'Makan Malam Warteg (Jam 7)' },
+            { id: 'jalan_pulang', label: 'Jalan Kaki Pulang (1.3 km)' },
+            { id: 'lari', label: 'Lari Santai 30 Menit (Hari Kerja)' }
+        ];
+
+        // Format Tanggal Indonesia
+        function formatDateString(date) {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('id-ID', options);
+        }
+
+        function getLocalDateKey(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        let selectedDate = new Date();
+        
+        const datePicker = document.getElementById('date-picker');
+        const currentDateLabel = document.getElementById('current-date');
+        const dayBadge = document.getElementById('day-badge');
+        const checklistContainer = document.getElementById('checklist-container');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const weekendSection = document.getElementById('weekend-section');
+        const workoutNotes = document.getElementById('workout-notes');
+
+        function initApp() {
+            datePicker.value = getLocalDateKey(selectedDate);
+            updateUI();
+        }
+
+        datePicker.addEventListener('change', (e) => {
+            selectedDate = new Date(e.target.value);
+            updateUI();
+        });
+
+        function changeDateToToday() {
+            selectedDate = new Date();
+            datePicker.value = getLocalDateKey(selectedDate);
+            updateUI();
+        }
+
+        function isWeekend(date) {
+            const day = date.getDay();
+            return day === 0 || day === 6; // 0 = Minggu, 6 = Sabtu
+        }
+
+        function updateUI() {
+            currentDateLabel.textContent = formatDateString(selectedDate);
+            const dateKey = getLocalDateKey(selectedDate);
+            
+            // Cek data tersimpan
+            let savedData = JSON.parse(localStorage.getItem(dateKey)) || { tasks: {}, workout: '' };
+
+            // Cek apakah weekend atau weekdays
+            const weekend = isWeekend(selectedDate);
+            if (weekend) {
+                dayBadge.textContent = "Weekend / Libur";
+                dayBadge.className = "bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs px-3 py-1 rounded-full font-medium";
+                weekendSection.classList.remove('hidden');
+                workoutNotes.value = savedData.workout || '';
+            } else {
+                dayBadge.textContent = "Hari Kerja";
+                dayBadge.className = "bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs px-3 py-1 rounded-full font-medium";
+                weekendSection.classList.add('hidden');
+            }
+
+            // Render checklist
+            checklistContainer.innerHTML = '';
+            let completedCount = 0;
+            const totalTasks = tasksConfig.length;
+
+            tasksConfig.forEach(task => {
+                const isChecked = savedData.tasks[task.id] || false;
+                if (isChecked) completedCount++;
+
+                const div = document.createElement('div');
+                div.className = `flex items-center justify-between p-3 rounded-xl border transition ${isChecked ? 'bg-orange-500/5 border-orange-500/30 text-orange-200 line-through' : 'bg-slate-800/60 border-slate-700/60 text-slate-200'}`;
+                
+                div.innerHTML = `
+                    <span class="text-xs font-medium">${task.label}</span>
+                    <input type="checkbox" data-id="${task.id}" ${isChecked ? 'checked' : ''} class="w-5 h-5 accent-orange-500 rounded cursor-pointer">
+                `;
+
+                const checkbox = div.querySelector('input');
+                checkbox.addEventListener('change', (e) => {
+                    savedData.tasks[task.id] = e.target.checked;
+                    localStorage.setItem(dateKey, JSON.stringify(savedData));
+                    updateUI();
+                });
+
+                checklistContainer.appendChild(div);
+            });
+
+            // Update progress bar
+            const percent = Math.round((completedCount / totalTasks) * 100);
+            progressBar.style.width = `${percent}%`;
+            progressText.textContent = `${percent}% Selesai (${completedCount}/${totalTasks})`;
+        }
+
+        function saveWorkoutNotes() {
+            const dateKey = getLocalDateKey(selectedDate);
+            let savedData = JSON.parse(localStorage.getItem(dateKey)) || { tasks: {}, workout: '' };
+            savedData.workout = workoutNotes.value;
+            localStorage.setItem(dateKey, JSON.stringify(savedData));
+            alert('Catatan workout berhasil disimpan!');
+        }
+
+        // Jalankan saat pertama load
+        initApp();
+    </script>
+</body>
+</html>
