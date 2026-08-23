@@ -283,12 +283,12 @@
                 monthChartContainer.appendChild(card);
             }
 
-            // Auto-scroll disesuaikan ke offset 84% dari lebar kotak agar presisi di tengah
+            // Auto-scroll disesuaikan ke offset 81.5% dari lebar kotak agar presisi di tengah
             if (targetCard) {
                 setTimeout(() => {
                     const container = monthChartContainer;
                     const cardWidth = targetCard.offsetWidth || 62;
-                    const scrollLeftTarget = targetCard.offsetLeft - (container.clientWidth / 2) + (cardWidth / 2) - (cardWidth * 0.84);
+                    const scrollLeftTarget = targetCard.offsetLeft - (container.clientWidth / 2) + (cardWidth / 2) - (cardWidth * 0.815);
                     container.scrollTo({
                         left: scrollLeftTarget,
                         behavior: 'smooth'
